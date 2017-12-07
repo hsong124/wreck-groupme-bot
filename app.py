@@ -34,10 +34,10 @@ def webhook():
             cursor = conn.cursor()
             #add 1 to the number of posts of the person that posted
             cursor.execute(sql.SQL(
-                "UPDATE tribe_data SET num_posts = num_posts+1 WHERE name = %s"),
+                "UPDATE wreck_data SET num_posts = num_posts+1 WHERE name = %s"),
                 (data['name'],))
             if cursor.rowcount == 0:
-                cursor.execute(sql.SQL("INSERT INTO tribe_data VALUES (%s, 1, 0, 0, now())"), (data['name'],))
+                cursor.execute(sql.SQL("INSERT INTO wreck_data VALUES (%s, 1, 0, 0, now()), %s"), (data['name'], data['id'],))
                 send_debug_message("added %s to the group" % data['name'])
             conn.commit()
             cursor.close()
@@ -45,18 +45,12 @@ def webhook():
         except (Exception, psycopg2.DatabaseError) as error:
             send_debug_message(error)
         text = data['text'].lower()
-        if '!website' in text:
-            #send the website information to the groupme
-            send_tribe_message("https://gttribe.wordpress.com/about/")
-        elif '!iloveyou' in text:
+        if '!iloveyou' in text:
             #special command for Stephen Mock
             send_tribe_message("I love you too %s <3" % data['name'])
         elif '!help' in text:
             #Special command for Jeffrey Minowa
-            send_tribe_message("available commands: !throw, !gym, !website, !ultianalytics, !leaderboard")
-        elif 'ultianalytics' in text:
-            #get the ultianalytics password
-            send_tribe_message("url: http://www.ultianalytics.com/app/#/5629819115012096/login || password: %s" % (os.getenv("ULTI_PASS")))
+            send_tribe_message("available commands: !throw, !gym, !leaderboard")
         elif '!gym' in text or '!throw' in text:
             addition = 1.0 if "!gym" in text else 0.5
             if len(data['attachments']) > 0:
@@ -90,7 +84,7 @@ def webhook():
                 cursor = conn.cursor()
                 #get all of the people who's workout scores are greater than -1 (any non players have a workout score of -1)
                 cursor.execute(sql.SQL(
-                    "SELECT * FROM tribe_data WHERE workout_score > -1.0"),)
+                    "SELECT * FROM wreck_data WHERE workout_score > -1.0"),)
                 leaderboard = cursor.fetchall()
                 leaderboard.sort(key=lambda s: s[3], reverse=True) #sort the leaderboard by score descending
                 string1 = "Top 15:\n"
@@ -100,65 +94,6 @@ def webhook():
                 for x in range(15, len(leaderboard)):
                     string2 += '%d) %s with %.1f points \n' % (x + 1, leaderboard[x][0], leaderboard[x][3])
                 send_tribe_message(string1) #need to split it up into 2 because groupme has a max message length for bots
-                send_tribe_message(string2)
-                cursor.close()
-                conn.close()
-            except (Exception, psycopg2.DatabaseError) as error:
-                send_debug_message(error)
-        elif 'mystery2' in text: #display the leaderboard for who works out the most
-            try:
-                urllib.parse.uses_netloc.append("postgres")
-                url = urllib.parse.urlparse(os.environ["DATABASE_URL"])
-                conn = psycopg2.connect(
-                    database=url.path[1:],
-                    user=url.username,
-                    password=url.password,
-                    host=url.hostname,
-                    port=url.port
-                )
-                cursor = conn.cursor()
-                #get all of the people who's workout scores are greater than -1 (any non players have a workout score of -1)
-                cursor.execute(sql.SQL(
-                    "SELECT * FROM tribe_data WHERE workout_score > -1.0"),)
-                leaderboard = cursor.fetchall()
-                leaderboard.sort(key=lambda s: s[2], reverse=True) #sort the leaderboard by score descending
-                string1 = "Top 15:\n"
-                string2 = "Everyone Else:\n"
-                for x in range(0, 15):
-                    string1 += '%d) %s with %d points \n' % (x + 1, leaderboard[x][0], leaderboard[x][2])
-                for x in range(15, len(leaderboard)):
-                    string2 += '%d) %s with %d points \n' % (x + 1, leaderboard[x][0], leaderboard[x][2])
-                send_tribe_message(string1) #need to split it up into 2 because groupme has a max message length for bots
-                send_tribe_message(string2)
-                cursor.close()
-                conn.close()
-            except (Exception, psycopg2.DatabaseError) as error:
-                send_debug_message(error)
-        elif '!mystery' in text:  # displays the leaderboard for who posts the most
-            try:
-                urllib.parse.uses_netloc.append("postgres")
-                url = urllib.parse.urlparse(os.environ["DATABASE_URL"])
-                conn = psycopg2.connect(
-                    database=url.path[1:],
-                    user=url.username,
-                    password=url.password,
-                    host=url.hostname,
-                    port=url.port
-                )
-                cursor = conn.cursor()
-                # get all of the people who's workout scores are greater than -1 (any non players have a workout score of -1)
-                cursor.execute(sql.SQL(
-                    "SELECT * FROM tribe_data WHERE workout_score > -1.0"), )
-                leaderboard = cursor.fetchall()
-                leaderboard.sort(key=lambda s: s[1], reverse=True)  # sort the leaderboard by score descending
-                string1 = "Top 15:\n"
-                string2 = "Everyone Else:\n"
-                for x in range(0, 15):
-                    string1 += '%d) %s with %d points \n' % (x + 1, leaderboard[x][0], leaderboard[x][1])
-                for x in range(15, len(leaderboard)):
-                    string2 += '%d) %s with %d points \n' % (x + 1, leaderboard[x][0], leaderboard[x][1])
-                send_tribe_message(
-                    string1)  # need to split it up into 2 because groupme has a max message length for bots
                 send_tribe_message(string2)
                 cursor.close()
                 conn.close()
@@ -223,10 +158,10 @@ def test_db_connection(names, addition): #poorly named method. It works, but it 
         now = datetime.datetime.now()
         for name in names:
             cursor.execute(sql.SQL(
-                "UPDATE tribe_data SET num_workouts = num_workouts+1, workout_score = workout_score+%s, last_post = now() WHERE name = %s"),
+                "UPDATE wreck_data SET num_workouts = num_workouts+1, workout_score = workout_score+%s, last_post = now() WHERE name = %s"),
                 [str(addition), name])
             if cursor.rowcount == 0:
-                cursor.execute(sql.SQL("INSERT INTO tribe_data VALUES(%s, %s, %s, %s"), (name, "0", "1", str(addition),))
+                cursor.execute(sql.SQL("INSERT INTO wreck_data VALUES(%s, %s, %s, %s"), (name, "0", "1", str(addition),))
                 send_debug_message("added %s to the group" % name)
             conn.commit()
             send_debug_message("committed %s" % name)
