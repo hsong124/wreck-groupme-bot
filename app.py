@@ -20,6 +20,7 @@ def webhook():
     log('Recieved {}'.format(data))
     # We don't want to reply to ourselves
     if data['name'] != 'WORKOUT BOT' and data['name'] != 'TEST':
+        send_debug_message("message detected")
         try:
             #set up connection to the database
             urllib.parse.uses_netloc.append("postgres")
@@ -37,6 +38,7 @@ def webhook():
                 "UPDATE wreck_data SET num_posts = num_posts+1 WHERE name = %s"),
                 (data['name'],))
             if cursor.rowcount == 0:
+                send_debug_message("adding %s to the database" % data['name'])
                 cursor.execute(sql.SQL("INSERT INTO wreck_data VALUES (%s, 1, 0, 0, now()), %s"), (data['name'], data['user_id'],))
                 send_debug_message("added %s to the group" % data['name'])
             conn.commit()
@@ -47,10 +49,10 @@ def webhook():
         text = data['text'].lower()
         if '!iloveyou' in text:
             #special command for Stephen Mock
-            send_tribe_message("I love you too %s <3" % data['name'])
+            send_wreck_message("I love you too %s <3" % data['name'])
         elif '!help' in text:
             #Special command for Jeffrey Minowa
-            send_tribe_message("available commands: !throw, !gym, !leaderboard")
+            send_wreck_message("available commands: !throw, !gym, !leaderboard")
         elif '!gym' in text or '!throw' in text:
             addition = 1.0 if "!gym" in text else 0.5
             if len(data['attachments']) > 0:
@@ -93,16 +95,16 @@ def webhook():
                     string1 += '%d) %s with %.1f points \n' % (x + 1, leaderboard[x][0], leaderboard[x][3])
                 for x in range(15, len(leaderboard)):
                     string2 += '%d) %s with %.1f points \n' % (x + 1, leaderboard[x][0], leaderboard[x][3])
-                send_tribe_message(string1) #need to split it up into 2 because groupme has a max message length for bots
-                send_tribe_message(string2)
+                send_wreck_message(string1) #need to split it up into 2 because groupme has a max message length for bots
+                send_wreck_message(string2)
                 cursor.close()
                 conn.close()
             except (Exception, psycopg2.DatabaseError) as error:
                 send_debug_message(error)
     return "ok", 200
 
-def send_tribe_message(msg):
-    send_message(msg, os.getenv("TRIBE_BOT_ID"))
+def send_wreck_message(msg):
+    send_message(msg, os.getenv("WRECK_BOT_ID"))
 
 
 def send_message(msg, bot_ID):
