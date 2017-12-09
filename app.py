@@ -39,7 +39,7 @@ def webhook():
                 (data['name'],))
             if cursor.rowcount == 0:
                 send_debug_message("adding %s to the database" % data['name'])
-                cursor.execute(sql.SQL("INSERT INTO wreck_data VALUES (%s, 1, 0, 0, now()), %s"), (data['name'], data['user_id'],))
+                cursor.execute(sql.SQL("INSERT INTO wreck_data VALUES (%s, 1, 0, 0, now(), %s)"), (data['name'], data['user_id'],))
                 send_debug_message("added %s to the group" % data['name'])
             conn.commit()
             cursor.close()
