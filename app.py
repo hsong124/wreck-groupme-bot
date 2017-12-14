@@ -27,10 +27,11 @@ def webhook():
             send_wreck_message("available commands: !throw, !gym")
         elif '!gym' in text:
             send_debug_message("gym detected")
+            names = []
             if len(data['attachments']) > 0:
                 #attachments are images or @mentions
                 group_members = get_group_info(data['group_id']) #should get the groupme names of all members in the group.
-                names = []
+
                 for attachment in data["attachments"]:
                     if attachment['type'] == 'mentions': #grab all the people @'d in the post to include them
                         for mentioned in attachment['user_ids']:
@@ -38,15 +39,16 @@ def webhook():
                                 if member["user_id"] == mentioned:
                                     names.append(member["nickname"])
                 #append the poster to the list of names to be uodated in the database
-                names.append(data['name'])
-                add_to_db(names, "gym")
+            names.append(data['name'])
+            add_to_db(names, "gym")
         elif '!throw' in text:
             send_debug_message("throw detected")
+            names = []
             if len(data['attachments']) > 0:
                 # attachments are images or @mentions
                 group_members = get_group_info(
                     data['group_id'])  # should get the groupme names of all members in the group.
-                names = []
+
                 for attachment in data["attachments"]:
                     if attachment['type'] == 'mentions':  # grab all the people @'d in the post to include them
                         for mentioned in attachment['user_ids']:
@@ -54,8 +56,8 @@ def webhook():
                                 if member["user_id"] == mentioned:
                                     names.append(member["nickname"])
                 # append the poster to the list of names to be uodated in the database
-                names.append(data['name'])
-                add_to_db(names, "throw")
+            names.append(data['name'])
+            add_to_db(names, "throw")
         """
         elif '!leaderboard' in text: #post the leaderboard in the groupme
             try:
