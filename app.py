@@ -19,7 +19,7 @@ def webhook():
     data = request.get_json()
     log('Recieved {}'.format(data))
     # We don't want to reply to ourselves
-    if data['name'] != 'WORKOUT BOT' and data['name'] != 'TEST':
+    if data['name'] != 'WerkBot' and data['name'] != 'testwreckbot':
         send_debug_message("message detected")
         text = data['text'].lower()
         if '!help' in text:
@@ -31,7 +31,6 @@ def webhook():
             if len(data['attachments']) > 0:
                 #attachments are images or @mentions
                 group_members = get_group_info(data['group_id']) #should get the groupme names of all members in the group.
-
                 for attachment in data["attachments"]:
                     if attachment['type'] == 'mentions': #grab all the people @'d in the post to include them
                         for mentioned in attachment['user_ids']:
@@ -48,7 +47,6 @@ def webhook():
                 # attachments are images or @mentions
                 group_members = get_group_info(
                     data['group_id'])  # should get the groupme names of all members in the group.
-
                 for attachment in data["attachments"]:
                     if attachment['type'] == 'mentions':  # grab all the people @'d in the post to include them
                         for mentioned in attachment['user_ids']:
@@ -148,7 +146,7 @@ def add_to_db(names, string): #poorly named method. It works, but it didn't alwa
         for name in names:
             if string == "throw":
                 cursor.execute(sql.SQL(
-                    "UPDATE wreck_data SET num_throw = num_throw+1, WHERE name = %s"),
+                    "UPDATE wreck_data SET num_throw = num_throw+1 WHERE name = %s"),
                     (name, ))
                 send_debug_message("throw +1 for %s" % name)
                 if cursor.rowcount == 0:
@@ -158,7 +156,7 @@ def add_to_db(names, string): #poorly named method. It works, but it didn't alwa
                     send_debug_message("added %s to the db" % name)
             elif string == "gym":
                 cursor.execute(sql.SQL(
-                    "UPDATE wreck_data SET num_gym = num_gym+1, WHERE name = %s"),
+                    "UPDATE wreck_data SET num_gym = num_gym+1 WHERE name = %s"),
                     (name, ))
                 send_debug_message("gym +1 for %s" % name)
                 if cursor.rowcount == 0:
