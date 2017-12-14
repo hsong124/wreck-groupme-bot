@@ -21,57 +21,42 @@ def webhook():
     # We don't want to reply to ourselves
     if data['name'] != 'WORKOUT BOT' and data['name'] != 'TEST':
         send_debug_message("message detected")
-        try:
-            #set up connection to the database
-            urllib.parse.uses_netloc.append("postgres")
-            url = urllib.parse.urlparse(os.environ["DATABASE_URL"])
-            conn = psycopg2.connect(
-                database=url.path[1:],
-                user=url.username,
-                password=url.password,
-                host=url.hostname,
-                port=url.port
-            )
-            cursor = conn.cursor()
-            #add 1 to the number of posts of the person that posted
-            cursor.execute(sql.SQL(
-                "UPDATE wreck_data SET num_posts = num_posts+1 WHERE name = %s"),
-                (data['name'],))
-            if cursor.rowcount == 0:
-                send_debug_message("adding %s to the database" % data['name'])
-                cursor.execute(sql.SQL("INSERT INTO wreck_data VALUES (%s, 1, 0, 0, now(), %s)"), (data['name'], data['user_id'],))
-                send_debug_message("added %s to the group" % data['name'])
-            conn.commit()
-            cursor.close()
-            conn.close()
-        except (Exception, psycopg2.DatabaseError) as error:
-            send_debug_message(error)
         text = data['text'].lower()
-        if '!iloveyou' in text:
-            #special command for Stephen Mock
-            send_wreck_message("I love you too %s <3" % data['name'])
-        elif '!help' in text:
+        if '!help' in text:
             #Special command for Jeffrey Minowa
-            send_wreck_message("available commands: !throw, !gym, !leaderboard")
-        elif '!gym' in text or '!throw' in text:
-            addition = 1.0 if "!gym" in text else 0.5
+            send_wreck_message("available commands: !throw, !gym")
+        elif '!gym' in text:
+            send_debug_message("gym detected")
             if len(data['attachments']) > 0:
                 #attachments are images or @mentions
                 group_members = get_group_info(data['group_id']) #should get the groupme names of all members in the group.
                 names = []
-                found_attachment = False #This will track whether we found an image or not, which is required
                 for attachment in data["attachments"]:
-                    if attachment['type'] == 'image':
-                        send_workout_selfie(data["name"] + " says \"" + data['text'] + "\"", attachment['url']) #send the workout selfie to the other groupme
-                        found_attachment = True
                     if attachment['type'] == 'mentions': #grab all the people @'d in the post to include them
                         for mentioned in attachment['user_ids']:
                             for member in group_members:
                                 if member["user_id"] == mentioned:
                                     names.append(member["nickname"])
-                if found_attachment: #append the poster to the list of names to be uodated in the database
-                    names.append(data['name'])
-                    test_db_connection(names, addition)
+                #append the poster to the list of names to be uodated in the database
+                names.append(data['name'])
+                add_to_db(names, "gym")
+        elif '!throw' in text:
+            send_debug_message("throw detected")
+            if len(data['attachments']) > 0:
+                # attachments are images or @mentions
+                group_members = get_group_info(
+                    data['group_id'])  # should get the groupme names of all members in the group.
+                names = []
+                for attachment in data["attachments"]:
+                    if attachment['type'] == 'mentions':  # grab all the people @'d in the post to include them
+                        for mentioned in attachment['user_ids']:
+                            for member in group_members:
+                                if member["user_id"] == mentioned:
+                                    names.append(member["nickname"])
+                # append the poster to the list of names to be uodated in the database
+                names.append(data['name'])
+                add_to_db(names, "throw")
+        """
         elif '!leaderboard' in text: #post the leaderboard in the groupme
             try:
                 urllib.parse.uses_netloc.append("postgres")
@@ -86,7 +71,7 @@ def webhook():
                 cursor = conn.cursor()
                 #get all of the people who's workout scores are greater than -1 (any non players have a workout score of -1)
                 cursor.execute(sql.SQL(
-                    "SELECT * FROM wreck_data WHERE workout_score > -1.0"),)
+                    "SELECT * FROM wreck_data WHERE num_throw > -1.0 and num_gym > -1.0"),)
                 leaderboard = cursor.fetchall()
                 leaderboard.sort(key=lambda s: s[3], reverse=True) #sort the leaderboard by score descending
                 string1 = "Top 15:\n"
@@ -101,6 +86,7 @@ def webhook():
                 conn.close()
             except (Exception, psycopg2.DatabaseError) as error:
                 send_debug_message(error)
+        """
     return "ok", 200
 
 def send_wreck_message(msg):
@@ -142,7 +128,7 @@ def parse_group_for_members(html_string):
     return json.loads(html_string)
 
 
-def test_db_connection(names, addition): #poorly named method. It works, but it didn't always work so it was just a "test"
+def add_to_db(names, string): #poorly named method. It works, but it didn't always work so it was just a "test"
     send_debug_message(str(names))
     cursor = None
     conn = None
@@ -157,14 +143,15 @@ def test_db_connection(names, addition): #poorly named method. It works, but it 
             port=url.port
         )
         cursor = conn.cursor()
-        now = datetime.datetime.now()
         for name in names:
-            cursor.execute(sql.SQL(
-                "UPDATE wreck_data SET num_workouts = num_workouts+1, workout_score = workout_score+%s, last_post = now() WHERE name = %s"),
-                [str(addition), name])
-            if cursor.rowcount == 0:
-                cursor.execute(sql.SQL("INSERT INTO wreck_data VALUES(%s, %s, %s, %s"), (name, "0", "1", str(addition),))
-                send_debug_message("added %s to the group" % name)
+            if string == "throw":
+                cursor.execute(sql.SQL(
+                    "UPDATE wreck_data SET num_throw = num_throw+1, WHERE name = %s"),
+                    (name, ))
+            elif string == "gym":
+                cursor.execute(sql.SQL(
+                    "UPDATE wreck_data SET num_gym = num_gym+1, WHERE name = %s"),
+                    (name, ))
             conn.commit()
             send_debug_message("committed %s" % name)
     except (Exception, psycopg2.DatabaseError) as error:
