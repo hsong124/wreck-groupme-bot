@@ -148,10 +148,22 @@ def add_to_db(names, string): #poorly named method. It works, but it didn't alwa
                 cursor.execute(sql.SQL(
                     "UPDATE wreck_data SET num_throw = num_throw+1, WHERE name = %s"),
                     (name, ))
+                send_debug_message("throw +1 for %s" % name)
+                if cursor.rowcount == 0:
+                    cursor.execute(sql.SQL(
+                        "INSERT INTO wreck_data values (%s, 1, 0)"),
+                        (name,))
+                    send_debug_message("added %s to the db" % name)
             elif string == "gym":
                 cursor.execute(sql.SQL(
                     "UPDATE wreck_data SET num_gym = num_gym+1, WHERE name = %s"),
                     (name, ))
+                send_debug_message("gym +1 for %s" % name)
+                if cursor.rowcount == 0:
+                    cursor.execute(sql.SQL(
+                        "INSERT INTO wreck_data values (%s, 0, 1)"),
+                        (name,))
+                    send_debug_message("added %s to the db" % name)
             conn.commit()
             send_debug_message("committed %s" % name)
     except (Exception, psycopg2.DatabaseError) as error:
