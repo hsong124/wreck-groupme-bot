@@ -24,9 +24,9 @@ def webhook():
         text = data['text'].lower()
         if '!help' in text:
             #Special command for Jeffrey Minowa
-            send_wreck_message("available commands: !throw, !gym")
-        elif '!gym' in text:
-            send_debug_message("gym detected")
+            send_wreck_message("available commands: !throw, !cardio")
+        elif '!cardio' in text:
+            send_debug_message("cardio detected")
             names = []
             if len(data['attachments']) > 0:
                 #attachments are images or @mentions
