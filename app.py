@@ -20,13 +20,13 @@ def webhook():
     log('Recieved {}'.format(data))
     # We don't want to reply to ourselves
     if data['name'] != 'WerkBot' and data['name'] != 'testwreckbot':
-        send_debug_message("message detected")
+        #send_debug_message("message detected")
         text = data['text'].lower()
         if '!help' in text:
             #Special command for Jeffrey Minowa
             send_wreck_message("available commands: !throw, !cardio")
         elif '!cardio' in text:
-            send_debug_message("cardio detected")
+            #send_debug_message("cardio detected")
             names = []
             if len(data['attachments']) > 0:
                 #attachments are images or @mentions
@@ -41,7 +41,7 @@ def webhook():
             names.append(data['name'])
             add_to_db(names, "gym")
         elif '!throw' in text:
-            send_debug_message("throw detected")
+            #send_debug_message("throw detected")
             names = []
             if len(data['attachments']) > 0:
                 # attachments are images or @mentions
