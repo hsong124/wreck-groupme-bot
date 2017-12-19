@@ -34,10 +34,11 @@ def webhook():
     if data['name'] != 'WerkBot' and data['name'] != 'testwreckbot':
         #send_debug_message("message detected")
         text = data['text'].lower()
+        
         if '!help' in text:
             #Special command for Jeffrey Minowa
             send_wreck_message("available commands: !throw, !cardio")
-        elif '!cardio' in text:
+        if '!cardio' in text:
             #send_debug_message("cardio detected")
             names = []
             if len(data['attachments']) > 0:
@@ -56,7 +57,7 @@ def webhook():
             rulePointer = total % 10
             rule = rulesXIII[rulePointer]
             send_wreck_message(rule)
-        elif '!throw' in text:
+        if '!throw' in text:
             #send_debug_message("throw detected")
             names = []
             if len(data['attachments']) > 0:
