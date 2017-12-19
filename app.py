@@ -14,7 +14,7 @@ from urllib.request import Request, urlopen
 from flask import Flask, request
 
 app = Flask(__name__)
-rulePointer = random.randint(0,9)
+
 rulesXIII = ["XIII.A. If the disc is on the ground, whether in- or out-of-bounds, any member of the team becoming offense may take possession of it.",
 "XIII.A.1.If an offensive player picks up the disc, that player must put it into play.",
 "XIII.A.2.If possession is gained at the spot where the disc is to be put into play, the thrower must establish a pivot at the spot of the disc.",
@@ -31,7 +31,6 @@ rulesXIII = ["XIII.A. If the disc is on the ground, whether in- or out-of-bounds
 def webhook():
     data = request.get_json()
     log('Recieved {}'.format(data))
-    global rulePointer
     # We don't want to reply to ourselves
     if data['name'] != 'WerkBot' and data['name'] != 'testwreckbot':
         #send_debug_message("message detected")
@@ -54,6 +53,8 @@ def webhook():
                 #append the poster to the list of names to be uodated in the database
             names.append(data['name'])
             add_to_db(names, "gym")
+            total = getTotal()
+            rulePointer = total % 10
             rule = rulesXIII[rulePointer]
             send_wreck_message(rule)
         elif '!throw' in text:
@@ -72,6 +73,8 @@ def webhook():
                 # append the poster to the list of names to be uodated in the database
             names.append(data['name'])
             add_to_db(names, "throw")
+            total = getTotal()
+            rulePointer = total % 10
             rule = rulesXIII[rulePointer]
             send_wreck_message(rule)
         """
@@ -107,6 +110,35 @@ def webhook():
         """
     return "ok", 200
 
+def getTotal():
+    total = 0
+    try:
+        urllib.parse.uses_netloc.append("postgres")
+        url = urllib.parse.urlparse(os.environ["DATABASE_URL"])
+        conn = psycopg2.connect(
+            database=url.path[1:],
+            user=url.username,
+            password=url.password,
+            host=url.hostname,
+            port=url.port
+        )
+        cursor = conn.cursor()
+        #get all of the people who's workout scores are greater than -1 (any non players have a workout score of -1)
+        cursor.execute(sql.SQL(
+            "SELECT * FROM wreck_data WHERE num_throw > -1.0 and num_gym > -1.0"),)
+        leaderboard = cursor.fetchall()
+        leaderboard.sort(key=lambda s: s[3], reverse=True) #sort the leaderboard by score descending
+        for x in range(0, len(leaderboard)):
+            total += leaderboard[x][1] # add a person's throw score
+            total += leaderboard[x][2] # add a persnon's gym score
+        cursor.close()
+        conn.close()
+        return total
+    except (Exception, psycopg2.DatabaseError) as error:
+        send_debug_message(error)
+        return 0
+        
+    
 def send_wreck_message(msg):
     send_message(msg, os.getenv("WRECK_BOT_ID"))
 
