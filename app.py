@@ -5,7 +5,6 @@ import json
 import urllib.request
 import datetime
 import psycopg2
-import random
 from psycopg2 import sql
 
 from urllib.parse import urlencode
@@ -127,8 +126,6 @@ def getTotal():
         cursor.execute(sql.SQL(
             "SELECT * FROM wreck_data WHERE num_throw > -1.0 and num_gym > -1.0"),)
         leaderboard = cursor.fetchall()
-        #leaderboard.sort(key=lambda s: s[], reverse=True) #sort the leaderboard by score descending
-        send_debug_message(leaderboard)
         for x in range(0, len(leaderboard)):
             total += leaderboard[x][1] # add a person's throw score
             total += leaderboard[x][2] # add a persnon's gym score
