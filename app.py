@@ -13,33 +13,20 @@ from urllib.request import Request, urlopen
 from flask import Flask, request
 
 app = Flask(__name__)
-rulePointer = 0
-rulesXIII = ["A. If the disc is on the ground, whether in- or out-of-bounds, any member of the team becoming offense may take possession of it.",
-"1.If an offensive player picks up the disc, that player must put it into play.",
-"2.If possession is gained at the spot where the disc is to be put into play, the thrower must establish a pivot at the spot of the disc.",
-"3.If the disc comes to rest on the playing field proper , a member of the team becoming offense must put the disc into play within ten seconds after it comes to rest. After ten seconds elapse, a defensive player within three meters of the disc may announce disc in, and then initiate and continue the stall count, but only if a defensive player has given audible warnings of ten and five seconds (the pre-stall).",
-"4.If the disc comes to rest other than on the playing field proper, a member of the team becoming offense must put the disc into play within twenty seconds after it comes to rest.",
-"a.If the disc is not reasonably retrievable within twenty seconds (e.g., far out-of-bounds or through a crowd), the player retrieving it may request another disc and any delay or pre-stall count is suspended until the offensive player receives the new disc.",
-"b.If the disc is in the end zone, after twenty seconds elapse, a defensive player within three meters of the disc may announce disc in, and then initiate and continue the stall count, but only if a defensive player has given audible warnings of twenty, ten and five seconds (the pre-stall).",
-"c.If the disc is out-of-bounds, after twenty seconds elapse, a defensive player within three meters of the spot the disc is to be put into play may announce disc in, and then initiate and continue the stall count, but only if a defensive player has given audible warnings of twenty, ten and five seconds (the pre-stall)."
-"5.If an offensive player unnecessarily delays putting the disc into play in violation of rule XIX.B, a defender within three meters of the spot the disc is to be put into play may issue a delay of game warning instead of calling a violation. If the behavior in violation of rule XIX.B is not immediately stopped, the marker may initiate and continue a stall count, regardless of the actions of the offense. In order to invoke this rule, after announcing delay of game, the marker must give the offense two seconds to react to the warning, and then announce disc in before initiating the stall count.",
-"B.For a live disc to be put into play, the thrower must establish a pivot at the appropriate spot on the field, touch the disc to the ground, and put it into play."]
+
 @app.route('/', methods=['POST'])
-
-
 def webhook():
     data = request.get_json()
     log('Recieved {}'.format(data))
-    global rulePointer
     # We don't want to reply to ourselves
     if data['name'] != 'WerkBot' and data['name'] != 'testwreckbot':
-        send_debug_message("message detected")
+        #send_debug_message("message detected")
         text = data['text'].lower()
         if '!help' in text:
             #Special command for Jeffrey Minowa
             send_wreck_message("available commands: !throw, !cardio")
         elif '!cardio' in text:
-            send_debug_message("cardio detected")
+            #send_debug_message("cardio detected")
             names = []
             if len(data['attachments']) > 0:
                 #attachments are images or @mentions
@@ -53,11 +40,6 @@ def webhook():
                 #append the poster to the list of names to be uodated in the database
             names.append(data['name'])
             add_to_db(names, "gym")
-            if rulePointer == 10:
-                rulePointer = 0
-            rule = rulesXIII[rulePointer]
-            rulePointer = rulePointer + 1
-            send_wreck_message(rule)
         elif '!throw' in text:
             #send_debug_message("throw detected")
             names = []
@@ -74,11 +56,6 @@ def webhook():
                 # append the poster to the list of names to be uodated in the database
             names.append(data['name'])
             add_to_db(names, "throw")
-            if rulePointer == 10:
-                rulePointer = 0
-            rule = rulesXIII[rulePointer]
-            rulePointer = rulePointer + 1
-            send_wreck_message(rule)
         """
         elif '!leaderboard' in text: #post the leaderboard in the groupme
             try:
@@ -190,12 +167,10 @@ def add_to_db(names, string): #poorly named method. It works, but it didn't alwa
             conn.commit()
             send_debug_message("committed %s" % name)
     except (Exception, psycopg2.DatabaseError) as error:
-        #send_debug_message(error)
+        send_debug_message(error)
     finally:
         if cursor is not None:
             cursor.close()
             conn.close()
-
-
 
 
