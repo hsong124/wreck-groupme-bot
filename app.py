@@ -152,7 +152,7 @@ def parse_group_for_members(html_string):
 
 
 def add_to_db(names, string): #poorly named method. It works, but it didn't always work so it was just a "test"
-    #send_debug_message(str(names))
+    send_debug_message(str(names))
     cursor = None
     conn = None
     try:
@@ -171,7 +171,7 @@ def add_to_db(names, string): #poorly named method. It works, but it didn't alwa
                 cursor.execute(sql.SQL(
                     "UPDATE wreck_data SET num_throw = num_throw+1 WHERE name = %s"),
                     (name, ))
-                #send_debug_message("throw +1 for %s" % name)
+                send_debug_message("throw +1 for %s" % name)
                 if cursor.rowcount == 0:
                     cursor.execute(sql.SQL(
                         "INSERT INTO wreck_data values (%s, 1, 0)"),
@@ -190,7 +190,7 @@ def add_to_db(names, string): #poorly named method. It works, but it didn't alwa
             conn.commit()
             #send_debug_message("committed %s" % name)
     except (Exception, psycopg2.DatabaseError) as error:
-        #send_debug_message(error)
+        send_debug_message(error)
     finally:
         if cursor is not None:
             cursor.close()
