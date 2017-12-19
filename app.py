@@ -190,7 +190,7 @@ def add_to_db(names, string): #poorly named method. It works, but it didn't alwa
             conn.commit()
             send_debug_message("committed %s" % name)
     except (Exception, psycopg2.DatabaseError) as error:
-        #send_debug_message(error)
+        pass
     finally:
         if cursor is not None:
             cursor.close()
