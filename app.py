@@ -80,7 +80,7 @@ def webhook():
             names.append(data['name'])
             add_to_db(names, "gym")
             total = getTotal()
-            rulePointer = total % 10
+            rulePointer = total % 26
             rule = rulesXIV[rulePointer]
             send_wreck_message(rule)
         if '!throw' in text:
@@ -100,7 +100,7 @@ def webhook():
             names.append(data['name'])
             add_to_db(names, "throw")
             total = getTotal()
-            rulePointer = total % 10
+            rulePointer = total % 26
             rule = rulesXIV[rulePointer]
             send_wreck_message(rule)
         """
